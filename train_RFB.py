@@ -43,7 +43,7 @@ parser.add_argument(
     '--resume_net', default=None, help='resume net for retraining')
 parser.add_argument('--resume_epoch', default=0,
                     type=int, help='resume iter for retraining')
-parser.add_argument('-max','--max_epoch', default=300,
+parser.add_argument('-max', '--max_epoch', default=300,
                     type=int, help='max epoch for retraining')
 parser.add_argument('--weight_decay', default=5e-4,
                     type=float, help='Weight decay for SGD')
@@ -63,7 +63,7 @@ if args.dataset == 'VOC':
     train_sets = [('2007', 'trainval'), ('2012', 'trainval')]
     cfg = (VOC_300, VOC_512)[args.size == '512']
 else:
-    train_sets = [('2014', 'train'),('2014', 'valminusminival')]
+    train_sets = [('2014', 'train'), ('2014', 'valminusminival')]
     cfg = (COCO_300, COCO_512)[args.size == '512']
 
 if args.version == 'RFB_vgg':
@@ -76,9 +76,10 @@ elif args.version == 'RFB_mobile':
 else:
     print('Unkown version!')
 
-img_dim = (300,512)[args.size=='512']
-rgb_means = ((104, 117, 123),(103.94,116.78,123.68))[args.version == 'RFB_mobile']
-p = (0.6,0.2)[args.version == 'RFB_mobile']
+img_dim = (300, 512)[args.size == '512']
+rgb_means = ((104, 117, 123), (103.94, 116.78, 123.68))[
+    args.version == 'RFB_mobile']
+p = (0.6, 0.2)[args.version == 'RFB_mobile']
 num_classes = (21, 81)[args.dataset == 'COCO']
 batch_size = args.batch_size
 weight_decay = 0.0005
@@ -116,7 +117,7 @@ if args.resume_net == None:
         net.up_reduce.apply(weights_init)
 
 else:
-# load resume network
+    # load resume network
     print('Loading resume network...')
     state_dict = torch.load(args.resume_net)
     # create new OrderedDict that does not contain `module.`
@@ -125,7 +126,7 @@ else:
     for k, v in state_dict.items():
         head = k[:7]
         if head == 'module.':
-            name = k[7:] # remove `module.`
+            name = k[7:]  # remove `module.`
         else:
             name = k
         new_state_dict[name] = v
@@ -141,7 +142,7 @@ if args.cuda:
 
 optimizer = optim.SGD(net.parameters(), lr=args.lr,
                       momentum=args.momentum, weight_decay=args.weight_decay)
-#optimizer = optim.RMSprop(net.parameters(), lr=args.lr,alpha = 0.9, eps=1e-08,
+# optimizer = optim.RMSprop(net.parameters(), lr=args.lr,alpha = 0.9, eps=1e-08,
 #                      momentum=args.momentum, weight_decay=args.weight_decay)
 
 criterion = MultiBoxLoss(num_classes, 0.5, True, 0, True, 3, 0.5, False)
@@ -172,8 +173,8 @@ def train():
 
     stepvalues_VOC = (150 * epoch_size, 200 * epoch_size, 250 * epoch_size)
     stepvalues_COCO = (90 * epoch_size, 120 * epoch_size, 140 * epoch_size)
-    stepvalues = (stepvalues_VOC,stepvalues_COCO)[args.dataset=='COCO']
-    print('Training',args.version, 'on', dataset.name)
+    stepvalues = (stepvalues_VOC, stepvalues_COCO)[args.dataset == 'COCO']
+    print('Training', args.version, 'on', dataset.name)
     step_index = 0
 
     if args.resume_epoch > 0:
@@ -189,25 +190,26 @@ def train():
                                                   shuffle=True, num_workers=args.num_workers, collate_fn=detection_collate))
             loc_loss = 0
             conf_loss = 0
-            if (epoch % 10 == 0 and epoch > 0) or (epoch % 5 ==0 and epoch > 200):
-                torch.save(net.state_dict(), args.save_folder+args.version+'_'+args.dataset + '_epoches_'+
+            if (epoch % 10 == 0 and epoch > 0) or (epoch % 5 == 0 and epoch > 200):
+                torch.save(net.state_dict(), args.save_folder+args.version+'_'+args.dataset + '_epoches_' +
                            repr(epoch) + '.pth')
             epoch += 1
 
         load_t0 = time.time()
         if iteration in stepvalues:
             step_index += 1
-        lr = adjust_learning_rate(optimizer, args.gamma, epoch, step_index, iteration, epoch_size)
-
+        lr = adjust_learning_rate(
+            optimizer, args.gamma, epoch, step_index, iteration, epoch_size)
 
         # load train data
         images, targets = next(batch_iterator)
-        
+
         #print(np.sum([torch.sum(anno[:,-1] == 2) for anno in targets]))
 
         if args.cuda:
             images = Variable(images.cuda())
-            targets = [Variable(anno.cuda(),volatile=True) for anno in targets]
+            targets = [Variable(anno.cuda(), volatile=True)
+                       for anno in targets]
         else:
             images = Variable(images)
             targets = [Variable(anno, volatile=True) for anno in targets]
@@ -228,20 +230,20 @@ def train():
             print('Epoch:' + repr(epoch) + ' || epochiter: ' + repr(iteration % epoch_size) + '/' + repr(epoch_size)
                   + '|| Totel iter ' +
                   repr(iteration) + ' || L: %.4f C: %.4f||' % (
-                loss_l.data[0],loss_c.data[0]) + 
+                loss_l.data[0], loss_c.data[0]) +
                 'Batch time: %.4f sec. ||' % (load_t1 - load_t0) + 'LR: %.8f' % (lr))
 
     torch.save(net.state_dict(), args.save_folder +
-               'Final_' + args.version +'_' + args.dataset+ '.pth')
+               'Final_' + args.version + '_' + args.dataset + '.pth')
 
 
 def adjust_learning_rate(optimizer, gamma, epoch, step_index, iteration, epoch_size):
-    """Sets the learning rate 
+    """Sets the learning rate
     # Adapted from PyTorch Imagenet example:
     # https://github.com/pytorch/examples/blob/master/imagenet/main.py
     """
     if epoch < 6:
-        lr = 1e-6 + (args.lr-1e-6) * iteration / (epoch_size * 5) 
+        lr = 1e-6 + (args.lr-1e-6) * iteration / (epoch_size * 5)
     else:
         lr = args.lr * (gamma ** (step_index))
     for param_group in optimizer.param_groups:
