@@ -47,10 +47,10 @@ class Detect(Function):
             conf_preds = conf_data.unsqueeze(0)
 
         else:
-            conf_preds = conf_data.view(num, num_priors,
+            conf_preds = conf_data.view(num, self.num_priors,
                                         self.num_classes)
-            self.boxes.expand_(num, self.num_priors, 4)
-            self.scores.expand_(num, self.num_priors, self.num_classes)
+            self.boxes.expand(num, self.num_priors, 4)
+            self.scores.expand(num, self.num_priors, self.num_classes)
 
         # Decode predictions into bboxes.
         for i in range(num):

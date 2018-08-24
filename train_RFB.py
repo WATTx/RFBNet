@@ -187,7 +187,7 @@ def train():
         if iteration % epoch_size == 0:
             # create batch iterator
             batch_iterator = iter(data.DataLoader(dataset, batch_size,
-                                                  shuffle=True, num_workers=args.num_workers, collate_fn=detection_collate))
+                                                  shuffle=False, num_workers=args.num_workers, collate_fn=detection_collate))
             loc_loss = 0
             conf_loss = 0
             if (epoch % 10 == 0 and epoch > 0) or (epoch % 5 == 0 and epoch > 200):
