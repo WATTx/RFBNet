@@ -32,7 +32,7 @@ class MultiBoxLoss(nn.Module):
         See: https://arxiv.org/pdf/1512.02325.pdf for more details.
     """
 
-    def __init__(self, num_classes, overlap_thresh, prior_for_matching, bkg_label, neg_mining, neg_pos, neg_overlap, encode_target):
+    def __init__(self, num_classes, overlap_thresh, prior_for_matching, bkg_label, neg_mining, neg_pos, neg_overlap, encode_target, device):
         super(MultiBoxLoss, self).__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
@@ -43,6 +43,7 @@ class MultiBoxLoss(nn.Module):
         self.negpos_ratio = neg_pos
         self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]
+        self.device = device
 
     def forward(self, predictions, priors, targets):
         """Multibox Loss
@@ -73,8 +74,8 @@ class MultiBoxLoss(nn.Module):
             match(self.threshold, truths, defaults,
                   self.variance, labels, loc_t, conf_t, idx)
         if GPU:
-            loc_t = loc_t.cuda()
-            conf_t = conf_t.cuda()
+            loc_t = loc_t.to(self.device)
+            conf_t = conf_t.to(self.device)
         # wrap targets
         loc_t = Variable(loc_t, requires_grad=False)
         conf_t = Variable(conf_t, requires_grad=False)
